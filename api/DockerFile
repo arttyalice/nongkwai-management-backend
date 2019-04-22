@@ -1,0 +1,4 @@
+# docker run work better for xampp :D
+
+FROM tomsik68/xampp
+COPY . /www
