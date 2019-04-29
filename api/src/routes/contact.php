@@ -40,19 +40,24 @@ $app->group('/contact', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
-    $this->get('/get/one/{contact_id}', function(Request $req, Response $res, $args) {
-        $contact_id = $args['contact_id'];
-        $sql = "SELECT 
-                    c.*, per.*
+    $this->get('/get/patient/{patient_id}', function(Request $req, Response $res, $args) {
+        $patient_id = $args['patient_id'];
+        $sql = "SELECT
+                    contact_id, contact_titlename, contact_firstname, contact_lastname,
+                    contact_addNum, contact_addMoo, contact_addSoi, contact_addRoad,
+                    contact_addVillage, c.SDTid, c.Did, c.Pid,
+                    pv.Pname_th, dt.Dname_th, sdt.SDTname_th, sdt.SDTzipcode,
+                    contact_phone, contact_relation, patient_id
                 FROM contact as c
-                    LEFT JOIN patient as p on c.patient_id = p.patient_id
-                    LEFT JOIN person as per on p.id_card = per.id_card
-                WHERE c.contact_id = $contact_id LIMIT 1";
+                    LEFT JOIN province as pv on c.Pid = pv.Pid
+                    LEFT JOIN district as dt on c.Did = dt.Did
+                    LEFT JOIN subdistrict as sdt on c.SDTid = sdt.SDTid
+                WHERE patient_id = $patient_id";
         try {
             $db = new db();
             $db = $db->connect();
             $stm = $db->query($sql);
-            $user = $stm->fetch(PDO::FETCH_ASSOC);
+            $user = $stm->fetchAll(PDO::FETCH_ASSOC);
             
             header('Content-type: application/json');
             return $res->withJSON($user, 200, JSON_UNESCAPED_UNICODE);

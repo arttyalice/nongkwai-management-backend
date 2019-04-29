@@ -1,10 +1,10 @@
 <?php
     class db{
-        private $dbhost = '?';
-        private $dbuser = '?';
-        private $dbport = '?';
-        private $dbpass = '?';
-        private $dbname = '?';
+        private $dbhost = 'localhost';
+        private $dbuser = 'root';
+        private $dbport = '3306';
+        private $dbpass = '';
+        private $dbname = 'nongkwai_management';
 
         // Connect
         public function connect(){
