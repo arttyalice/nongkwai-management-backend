@@ -50,7 +50,7 @@ $app->group('/disabled', function() {
             p.person_lastname, p.person_phone, p.person_birthday
         FROM disability AS d
             LEFT JOIN person as p on d.id_card = p.id_card
-        WHERE id_card = $pID LIMIT 1";
+        WHERE d.id_card = $pID LIMIT 1";
         try {
             $db = new db();
             $db = $db->connect();
@@ -118,7 +118,7 @@ $app->group('/disabled', function() {
 
         $sql = "UPDATE disability
             SET
-                id_card = '$new_id_card',
+                id_card = '$id_card',
                 disability_info = '$disability_info',
                 disability_detail='$disability_detail',
                 disability_type='$disability_type',

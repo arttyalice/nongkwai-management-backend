@@ -41,15 +41,15 @@ $app->group('/elder', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
-    $this->get('/get/one/{elID}', function(Request $req, Response $res, $args) {
-        $elID = $args['elID'];
+    $this->get('/get/one/{id_card}', function(Request $req, Response $res, $args) {
+        $id_card = $args['id_card'];
         $sql = "SELECT
             e.elders_id, e.elders_info, e.elders_detail, e.id_card, 
             e.getmoney_id, p.person_titlename, p.person_firstname, 
             p.person_lastname, p.person_phone, p.person_birthday
         FROM elders AS e
             LEFT JOIN person as p on e.id_card = p.id_card
-        WHERE elders_id = $elID LIMIT 1";
+        WHERE e.id_card = $id_card LIMIT 1";
         try {
             $db = new db();
             $db = $db->connect();
@@ -101,28 +101,26 @@ $app->group('/elder', function() {
             return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);
         }
     });
-    $this->post('/update/{disID}', function(Request $req, Response $res, $args) {
+    $this->post('/update/{edID}', function(Request $req, Response $res, $args) {
         $db = new db();
         $db = $db->connect();
         $isBegin = $db->beginTransaction();
 
-        $disID = $args['disID'];
+        $edID = $args['edID'];
         $id_card = $req->getParam('id_card');
         $elders_info = $req->getParam('elders_info');
         $elders_detail = $req->getParam('elders_detail');
-        $elders_type = $req->getParam('elders_type');
         $getmoney_id = $req->getParam('getmoney_id');
         $user_id = $req->getParam('user_id');
 
         $sql = "UPDATE elders
             SET
-                id_card = '$new_id_card',
+                id_card = '$id_card',
                 elders_info = '$elders_info',
                 elders_detail='$elders_detail',
-                elders_type='$elders_type',
                 getmoney_id='$getmoney_id',
                 user_id='$user_id'
-            WHERE elders_id = $disID";
+            WHERE elders_id = $edID";
         try {
             $db->exec($sql);
             $db->commit();

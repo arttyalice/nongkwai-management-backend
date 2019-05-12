@@ -37,6 +37,23 @@ $app->group('/person', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
+    $this->get('/get/list', function(Request $req, Response $res) {
+        try {
+            $sql = "SELECT ".
+            "id_card, CONCAT(person_titlename, ' ',person_firstname, ' ', person_lastname) as name ".
+            "FROM person ";
+            $sql .= "ORDER BY id_card desc ";
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query($sql);
+            $users = $stm->fetchAll(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($users, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
     $this->get('/get/one/{pID}', function(Request $req, Response $res, $args) {
         $pID = $args['pID'];
         $sql = "SELECT * FROM person WHERE id_card = $pID LIMIT 1";
@@ -45,6 +62,22 @@ $app->group('/person', function() {
             $db = $db->connect();
             $stm = $db->query($sql);
             $user = $stm->fetch(PDO::FETCH_ASSOC);
+            $user['person_type'] = array();
+            if ($user['id_card']) {
+                $pStm = $db->query("SELECT patient_id FROM patient WHERE id_card = $pID LIMIT 1");
+                $tmpP = $pStm->fetch(PDO::FETCH_ASSOC);
+                if (!empty($tmpP)) array_push($user['person_type'], 1);
+
+                $dStm = $db->query("SELECT disability_id FROM disability WHERE id_card = $pID LIMIT 1");
+                $tmpD = $dStm->fetch(PDO::FETCH_ASSOC);
+                if (!empty($tmpD)) array_push($user['person_type'], 2);
+
+                $eStm = $db->query("SELECT elders_id FROM elders WHERE id_card = $pID LIMIT 1");
+                $tmpE = $eStm->fetch(PDO::FETCH_ASSOC);
+                if (!empty($tmpE)) array_push($user['person_type'], 3);
+            } else {
+                return $res->withJSON(array('success' => false, 'description' => "person not found"), 400, JSON_UNESCAPED_UNICODE);
+            }
             
             header('Content-type: application/json');
             return $res->withJSON($user, 200, JSON_UNESCAPED_UNICODE);
@@ -76,6 +109,7 @@ $app->group('/person', function() {
         $person_lat = $req->getParam('person_lat');
         $person_lng = $req->getParam('person_lng');
         $user_id = $req->getParam('user_id');
+        $person_type = json_decode($req->getParam('person_type'));
         $sql = "INSERT INTO person
         (
             id_card, person_titlename, person_firstname, person_lastname,
@@ -90,6 +124,16 @@ $app->group('/person', function() {
             '$person_addSoi', '$person_addRoad', '$person_addVillage', $STDid,
             $Did, $Pid, '$person_phone', '$person_status', $person_lat, $person_lng, $user_id
         )";
+        for ($i=0; $i < count($person_type); $i++) {
+            $ele = $person_type[$i];
+            if ($ele == 1) {
+                $db->exec("INSERT INTO patient (id_card, user_id) VALUES ('$id_card', $user_id)");
+            } elseif ($ele == 2) {
+                $db->exec("INSERT INTO disability (id_card, user_id) VALUES ('$id_card', $user_id)");
+            } else {
+                $db->exec("INSERT INTO elders (id_card, user_id) VALUES ('$id_card', $user_id)");
+            }
+        }
         try {
             $db->exec($sql);
             $db->commit();
@@ -139,6 +183,8 @@ $app->group('/person', function() {
         $person_lat = $req->getParam('person_lat');
         $person_lng = $req->getParam('person_lng');
         $user_id = $req->getParam('user_id');
+        $person_type = json_decode($req->getParam('person_type'));
+        $old_person_type = json_decode($req->getParam('old_person_type'));
 
         $sql = "UPDATE person
             SET
@@ -164,6 +210,47 @@ $app->group('/person', function() {
             WHERE id_card = '$old_id_card'";
         try {
             $db->exec($sql);
+            for ($i=0; $i < count($person_type); $i++) {
+                $pt = $person_type[$i];
+                if (!in_array($pt, $old_person_type)) {
+                    $table = '';
+                    switch ($pt) {
+                        case 1:
+                            $table = 'patient';
+                            break;
+                        case 2:
+                            $table = 'disability';
+                            break;
+                        case 3:
+                            $table = 'elders';
+                            break;
+                        default:
+                            break;
+                    }
+                    $db->exec("INSERT INTO $table (id_card, user_id) VALUES ('$id_card', $user_id)");
+                }
+            }
+
+            for ($i=0; $i < count($old_person_type); $i++) { 
+                $opt = $old_person_type[$i];
+                if (!in_array($opt, $person_type)) {
+                    $table = '';
+                    switch ($pt) {
+                        case 1:
+                            $table = 'patient';
+                            break;
+                        case 2:
+                            $table = 'disability';
+                            break;
+                        case 3:
+                            $table = 'elders';
+                            break;
+                        default:
+                            break;
+                    }
+                    $db->exec("DELETE FROM $table WHERE id_card LIKE '$id_card'");
+                }
+            }
             $db->commit();
             header('Content-type: application/json');
             return $res->withJSON(array('success' => true), 200, JSON_UNESCAPED_UNICODE);

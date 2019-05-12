@@ -62,8 +62,8 @@ $app->group('/aid', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
-    $this->get('/get/one/{patient_id}', function(Request $req, Response $res, $args) {
-        $patient_id = $args['patient_id'];
+    $this->get('/get/one/{id_card}', function(Request $req, Response $res, $args) {
+        $id_card = $args['id_card'];
         $sql = "SELECT 
             pa.patient_id,
             pa.patient_habitatchoice,
@@ -90,7 +90,7 @@ $app->group('/aid', function() {
             pe.person_birthday
         FROM patient AS pa
             LEFT JOIN person as pe on pa.id_card = pe.id_card
-        WHERE pa.patient_id = $patient_id LIMIT 1";
+        WHERE pa.id_card = $id_card LIMIT 1";
         try {
             $db = new db();
             $db = $db->connect();
@@ -163,13 +163,12 @@ $app->group('/aid', function() {
             return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);
         }
     });
-    $this->post('/update/{patient_id}', function(Request $req, Response $res, $args) {
+    $this->post('/update/{id_card}', function(Request $req, Response $res, $args) {
         $db = new db();
         $db = $db->connect();
         $isBegin = $db->beginTransaction();
 
-        $patient_id = $args['patient_id'];
-        $id_card = $req->getParam('id_card');
+        $id_card = $args['id_card'];
         $patient_habitatchoice = $req->getParam('patient_habitatchoice');
         $patient_habitatdetail = $req->getParam('patient_habitatdetail');
         $patient_distance = $req->getParam('patient_distance');
@@ -190,7 +189,6 @@ $app->group('/aid', function() {
 
         $sql = "UPDATE patient
             SET
-                id_card = '$new_id_card',
                 patient_habitatchoice = '$patient_habitatchoice',
                 patient_habitatdetail='$patient_habitatdetail',
                 patient_distance='$patient_distance',
@@ -208,7 +206,7 @@ $app->group('/aid', function() {
                 patient_expensesDetail='$patient_expensesDetail',
                 getmoney_id='$getmoney_id',
                 user_id='$user_id'
-            WHERE patient_id = $patient_id";
+            WHERE id_card = $id_card";
         try {
             $db->exec($sql);
             $db->commit();

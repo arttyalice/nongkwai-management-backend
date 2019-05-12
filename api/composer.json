@@ -1,6 +1,7 @@
 {
     "require": {
         "slim/slim": "^3.0",
-        "2tvenom/cborencode": "dev-master"
+        "2tvenom/cborencode": "dev-master",
+        "paragonie/random_compat": "<9.99"
     }
 }
