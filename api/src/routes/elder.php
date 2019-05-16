@@ -19,14 +19,13 @@ $app->group('/elder', function() {
             FROM elders AS e
                 LEFT JOIN person as p on e.id_card = p.id_card
             ";
-            
             if ($search != null) {
-                $sql .= "WHERE e.elders_info LIKE '$search' OR ".
-                "e.elders_detail LIKE '$search' OR ".
-                "e.id_card LIKE '$search' OR ".
-                "p.person_titlename LIKE '$search' OR ".
-                "p.person_firstname LIKE '$search' OR ".
-                "p.person_lastname LIKE '$search' ";
+                $sql .= "WHERE e.elders_info LIKE '%$search%' OR ".
+                "e.elders_detail LIKE '%$search%' OR ".
+                "e.id_card LIKE '%$search%' OR ".
+                "p.person_titlename LIKE '%$search%' OR ".
+                "p.person_firstname LIKE '%$search%' OR ".
+                "p.person_lastname LIKE '%$search%' ";
             }
             $sql .= "ORDER BY e.elders_id desc ".
             "LIMIT $offset, $size";
@@ -125,7 +124,7 @@ $app->group('/elder', function() {
             $db->exec($sql);
             $db->commit();
             header('Content-type: application/json');
-            return $res->withJSON(array('success' => true), 200, JSON_UNESCAPED_UNICODE);
+            return $res->withJSON(array('success' => $sql), 200, JSON_UNESCAPED_UNICODE);
         } catch(PDOException $err) {
             $db->rollBack();
             return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);

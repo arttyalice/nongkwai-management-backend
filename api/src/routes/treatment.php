@@ -18,7 +18,7 @@ $app->group('/treatment', function() {
                         "t.treatment_id, t.treatment_detail, t.treatment_date, ".
                         "t.height, t.weigth, t.SBP, t.DBP, p.id_card, ".
                         "p.person_titlename, p.person_firstname, p.person_lastname, ".
-                        "d.disability_id, e.elders_id, pt.patient_id ".
+                        "p.person_phone, d.disability_id, e.elders_id, pt.patient_id ".
                     "FROM treatment as t ".
                         "LEFT JOIN person as p on t.id_card = p.id_card ".
                         "LEFT JOIN disability as d on p.id_card = d.id_card ".
@@ -33,7 +33,7 @@ $app->group('/treatment', function() {
                 "person_phone LIKE '%$search%' OR ".
                 "person_birthday LIKE '%$search%' ";
             }
-            $sql .= "ORDER BY p.id_card desc ".
+            $sql .= "ORDER BY t.treatment_id desc ".
             "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();
@@ -125,6 +125,8 @@ $app->group('/treatment', function() {
         $id_card = $args["id_card"];
         $user_id = $req->getParam("user_id");
         $treatment_detail = $req->getParam("treatment_detail");
+        $disease = $req->getParam("disease");
+        $hospital = $req->getParam("hospital");
         $height = $req->getParam("height");
         $weigth = $req->getParam("weigth");
         $SBP = $req->getParam("SBP");
@@ -132,9 +134,9 @@ $app->group('/treatment', function() {
         $files = $req->getUploadedFiles();
 
         $sql = "INSERT INTO  treatment
-            (treatment_detail, id_card, user_id, height, weigth, SBP, DBP)
+            (treatment_detail, id_card, user_id, disease, hospital, height, weigth, SBP, DBP)
         VALUES
-            ('$treatment_detail', '$id_card', $user_id, $height, $weigth, $SBP, $DBP)";
+            ('$treatment_detail', '$id_card', $user_id, '$disease', '$hospital', $height, $weigth, $SBP, $DBP)";
 
         try {
             $db->exec($sql); 

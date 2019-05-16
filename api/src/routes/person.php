@@ -17,12 +17,12 @@ $app->group('/person', function() {
             "FROM person ";
             
             if ($search != null) {
-                $sql .= "WHERE id_card LIKE '$search' OR ".
-                "person_titlename LIKE '$search' OR ".
-                "person_firstname LIKE '$search' OR ".
-                "person_lastname LIKE '$search' OR ".
-                "person_phone LIKE '$search' OR ".
-                "person_birthday LIKE '$search' ";
+                $sql .= "WHERE id_card LIKE '%$search%' OR ".
+                "person_titlename LIKE '%$search%' OR ".
+                "person_firstname LIKE '%$search%' OR ".
+                "person_lastname LIKE '%$search%' OR ".
+                "person_phone LIKE '%$search%' OR ".
+                "person_birthday LIKE '%$search%' ";
             }
             $sql .= "ORDER BY id_card desc ".
             "LIMIT $offset, $size";

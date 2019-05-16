@@ -18,11 +18,11 @@ $app->group('/user', function() {
             "FROM user ";
             
             if ($search != null) {
-                $sql .= "WHERE user_id LIKE '$search' OR ".
-                "fistname LIKE '$search' OR ".
-                "lastname LIKE '$search' OR ".
-                "phone LIKE '$search' OR ".
-                "user_status LIKE '$search' ";
+                $sql .= "WHERE user_id LIKE '%$search%' OR ".
+                "fistname LIKE '%$search%' OR ".
+                "lastname LIKE '%$search%' OR ".
+                "phone LIKE '%$search%' OR ".
+                "user_status LIKE '%$search%' ";
             }
             $sql .= "ORDER BY user_id desc ".
             "LIMIT $offset, $size";

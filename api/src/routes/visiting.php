@@ -20,15 +20,15 @@ $app->group('/visiting', function() {
             "LEFT JOIN elders as e on p.id_card = e.id_card ".
             "LEFT JOIN patient as pt on p.id_card = pt.id_card ";
             
-            if ($search != null) {
-                $sql .= "WHERE id_card LIKE '%$search%' OR ".
+            if (!empty($search)) {
+                $sql .= "WHERE p.id_card LIKE '%$search%' OR ".
                 "person_titlename LIKE '%$search%' OR ".
                 "person_firstname LIKE '%$search%' OR ".
                 "person_lastname LIKE '%$search%' OR ".
                 "person_phone LIKE '%$search%' OR ".
                 "person_birthday LIKE '%$search%' ";
             }
-            $sql .= "ORDER BY id_card desc ".
+            $sql .= "ORDER BY p.id_card desc ".
             "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();

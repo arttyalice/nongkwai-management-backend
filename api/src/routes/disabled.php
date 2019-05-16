@@ -122,8 +122,8 @@ $app->group('/disabled', function() {
                 disability_info = '$disability_info',
                 disability_detail='$disability_detail',
                 disability_type='$disability_type',
-                getmoney_id='$getmoney_id',
-                user_id='$user_id'
+                getmoney_id=$getmoney_id,
+                user_id=$user_id
             WHERE disability_id = $disID";
         try {
             $db->exec($sql);
