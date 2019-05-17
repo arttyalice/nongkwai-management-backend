@@ -46,17 +46,25 @@ $app->group('/treatment', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
-    $this->get('/get/visiting/all/{id_card}', function(Request $req, Response $res, $args) {
+    $this->get('/get/length', function(Request $req, Response $res, $args) {
+        try {
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query("SELECT COUNT(treatment_id) as length FROM treatment");
+            $length = $stm->fetch(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($length, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
+    $this->get('/get/treatment/all/{id_card}', function(Request $req, Response $res, $args) {
         try {
             $id_card = $args["id_card"];
-            $sql = "SELECT (adl.feeding + adl.grooming + adl.transfer +
-                        adl.toilet + adl.mobility + adl.dressing +
-                        adl.stairs + adl.bathing + adl.bowels +
-                        adl.bladder) as adl_summary, v.visiting_date,
-                        v.visiting_detail
-                    FROM visiting_adl as adl
-                        LEFT JOIN visiting as v on v.visiting_id = adl.visiting_id
-                    WHERE v.id_card = '$id_card'";
+            $sql = "SELECT tm.*
+                    FROM treatment as tm
+                    WHERE tm.id_card = '$id_card'";
 
             $db = new db();
             $db = $db->connect();
@@ -117,8 +125,26 @@ $app->group('/treatment', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
+    $this->get('/get/files/{treatment_id}', function(Request $req, Response $res, $args) {
+        $treatment_id = $args['treatment_id'];
+        $sql = "SELECT *
+                FROM treatment_file
+                WHERE treatment_id = $treatment_id";
+        try {
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query($sql);
+            $user = $stm->fetchAll(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json');
+            return $res->withJSON($user, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
     $this->post('/insert/{id_card}', function(Request $req, Response $res, $args) {
         $directory = $this->get('upload_directory');
+        $upload_url = $this->get('upload_url');
         $db = new db();
         $db = $db->connect();
         $isBegin = $db->beginTransaction();
@@ -144,7 +170,8 @@ $app->group('/treatment', function() {
             mkdir("./uploads/treatment/".$treatment_id, 0777);
             foreach ($files['files'] as $ele) {
                 $filename = moveUploadedFile($directory.'/treatment/'.$treatment_id, $ele);
-                $db->exec("INSERT INTO treatment_file(file_name, treatment_id) VALUES ('$filename', $treatment_id)");
+                $url = $upload_url.'treatment/'.$treatment_id.'/'.$filename;
+                $db->exec("INSERT INTO treatment_file(file_name, file_path, treatment_id) VALUES ('$filename', '$url', $treatment_id)");
             }
             $db->commit();
             header('Content-type: application/json');
@@ -152,16 +179,36 @@ $app->group('/treatment', function() {
         } catch(PDOException $err) {
             $db->rollBack();
             return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);
-        }   
+        }
+    });
+    $this->post('/delete/{tmID}', function(Request $req, Response $res, $args) {
+        $directory = $this->get('upload_directory');
+        $db = new db();
+        $db = $db->connect();
+        $isBegin = $db->beginTransaction();
+        $tmID = $args["tmID"];
+
+        $sql = "DELETE FROM treatment WHERE treatment_id = $tmID";
+        $file_sql = "DELETE FROM treatment_file WHERE treatment_id = $tmID";
+        try {
+            $db->exec($sql);
+            $db->exec($file_sql);
+            
+            array_map('unlink', glob("$directory/treatment/$tmID/*.*"));
+            rmdir("$directory/treatment/$tmID");
+
+            $db->commit();
+            header('Content-type: application/json');
+            return $res->withJSON(array('success' => true), 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            $db->rollBack();
+            return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);
+        }
     });
 });
 
 function moveUploadedFile($directory, Postfile $uploadedFile) {
-    $extension = pathinfo($uploadedFile->getClientFilename(), PATHINFO_EXTENSION);
-    $basename = bin2hex(random_bytes(8));
-    $filename = sprintf('%s.%0.8s', $basename, $extension);
-
+    $filename = $uploadedFile->getClientFilename();
     $uploadedFile->moveTo($directory . DIRECTORY_SEPARATOR . $filename);
-
     return $filename;
 }

@@ -14,6 +14,7 @@ $app = new \Slim\App([
 
 $container = $app->getContainer();
 $container['upload_directory'] = __DIR__ . '/uploads';
+$container['upload_url'] = 'http://localhost:10080/www/api/uploads/';
 
 $app->options('/{routes:.+}', function ($request, $response, $args) {
   return $response;

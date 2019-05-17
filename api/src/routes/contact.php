@@ -40,6 +40,23 @@ $app->group('/contact', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
+    $this->get('/get/one/{ctID}', function(Request $req, Response $res, $args) {
+        try {
+            $ctID = $args['ctID'];
+            $sql = "SELECT *
+                    FROM contact as c
+                    WHERE contact_id = $ctID";
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query($sql);
+            $users = $stm->fetch(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($users, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
     $this->get('/get/patient/{patient_id}', function(Request $req, Response $res, $args) {
         $patient_id = $args['patient_id'];
         $sql = "SELECT
@@ -144,7 +161,7 @@ $app->group('/contact', function() {
         $contact_relation = $req->getParam('contact_relation');
         $patient_id = $req->getParam('patient_id');
 
-        $sql = "UPDATE person
+        $sql = "UPDATE contact
             SET
                 contact_titlename = '$contact_titlename',
                 contact_firstname='$contact_firstname',
@@ -159,9 +176,8 @@ $app->group('/contact', function() {
                 Pid=$Pid,
                 contact_phone='$contact_phone',
                 contact_relation='$contact_relation',
-                patient_id=$patient_id,
-                user_id=$user_id
-            WHERE contact_id = '$contact_id'";
+                patient_id=$patient_id
+            WHERE contact_id = $contact_id";
         try {
             $db->exec($sql);
             $db->commit();
@@ -169,7 +185,7 @@ $app->group('/contact', function() {
             return $res->withJSON(array('success' => true), 200, JSON_UNESCAPED_UNICODE);
         } catch(PDOException $err) {
             $db->rollBack();
-            return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);
+            return $res->withJSON(array('success' => false, 'description' => $err->getMessage(), 'query' => $sql), 500, JSON_UNESCAPED_UNICODE);
         }
     });
 });

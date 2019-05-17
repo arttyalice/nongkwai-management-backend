@@ -83,6 +83,7 @@ $app->group('/aid', function() {
             pa.patient_expensesDetail,
             pa.id_card,
             pa.getmoney_id,
+            gm.getmoney_name,
             pe.person_titlename,
             pe.person_firstname,
             pe.person_lastname,
@@ -90,6 +91,7 @@ $app->group('/aid', function() {
             pe.person_birthday
         FROM patient AS pa
             LEFT JOIN person as pe on pa.id_card = pe.id_card
+            LEFT JOIN get_money as gm on pa.getmoney_id = gm.getmoney_id
         WHERE pa.id_card = $id_card LIMIT 1";
         try {
             $db = new db();

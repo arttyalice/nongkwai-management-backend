@@ -46,10 +46,11 @@ $app->group('/disabled', function() {
         $pID = $args['pID'];
         $sql = "SELECT
             d.disability_id, d.disability_info, d.disability_detail, d.disability_type,
-            d.id_card, d.getmoney_id, p.person_titlename, p.person_firstname,
+            d.id_card, d.getmoney_id, gm.getmoney_name, p.person_titlename, p.person_firstname,
             p.person_lastname, p.person_phone, p.person_birthday
         FROM disability AS d
             LEFT JOIN person as p on d.id_card = p.id_card
+            LEFT JOIN get_money as gm on d.getmoney_id = gm.getmoney_id
         WHERE d.id_card = $pID LIMIT 1";
         try {
             $db = new db();

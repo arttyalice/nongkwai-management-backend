@@ -44,10 +44,11 @@ $app->group('/elder', function() {
         $id_card = $args['id_card'];
         $sql = "SELECT
             e.elders_id, e.elders_info, e.elders_detail, e.id_card, 
-            e.getmoney_id, p.person_titlename, p.person_firstname, 
+            e.getmoney_id, gm.getmoney_name, p.person_titlename, p.person_firstname, 
             p.person_lastname, p.person_phone, p.person_birthday
         FROM elders AS e
             LEFT JOIN person as p on e.id_card = p.id_card
+            LEFT JOIN get_money as gm on e.getmoney_id = gm.getmoney_id
         WHERE e.id_card = $id_card LIMIT 1";
         try {
             $db = new db();

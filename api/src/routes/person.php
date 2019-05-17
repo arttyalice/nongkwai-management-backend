@@ -13,18 +13,22 @@ $app->group('/person', function() {
                 return $res->withJSON(array('status' => $size), 400);
             }
             $sql = "SELECT ".
-            "id_card, person_titlename, person_firstname, person_lastname, person_birthday, person_phone ".
-            "FROM person ";
+            "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, p.person_birthday, p.person_phone, ".
+            "d.disability_id, e.elders_id, pt.patient_id ".
+            "FROM person as p ".
+            "LEFT JOIN disability as d on p.id_card = d.id_card ".
+            "LEFT JOIN elders as e on p.id_card = e.id_card ".
+            "LEFT JOIN patient as pt on p.id_card = pt.id_card ";
             
             if ($search != null) {
-                $sql .= "WHERE id_card LIKE '%$search%' OR ".
-                "person_titlename LIKE '%$search%' OR ".
-                "person_firstname LIKE '%$search%' OR ".
-                "person_lastname LIKE '%$search%' OR ".
-                "person_phone LIKE '%$search%' OR ".
-                "person_birthday LIKE '%$search%' ";
+                $sql .= "WHERE p.id_card LIKE '%$search%' OR ".
+                "p.person_titlename LIKE '%$search%' OR ".
+                "p.person_firstname LIKE '%$search%' OR ".
+                "p.person_lastname LIKE '%$search%' OR ".
+                "p.person_phone LIKE '%$search%' OR ".
+                "p.person_birthday LIKE '%$search%' ";
             }
-            $sql .= "ORDER BY id_card desc ".
+            $sql .= "ORDER BY p.id_card desc ".
             "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();
@@ -56,7 +60,16 @@ $app->group('/person', function() {
     });
     $this->get('/get/one/{pID}', function(Request $req, Response $res, $args) {
         $pID = $args['pID'];
-        $sql = "SELECT * FROM person WHERE id_card = $pID LIMIT 1";
+        $sql = "SELECT p.*, d.disability_id, e.elders_id, pt.patient_id, ".
+            "pv.Pname_th, dt.Dname_th, sdt.SDTname_th, sdt.SDTzipcode ".
+            "FROM person as p ".
+                "LEFT JOIN disability as d on p.id_card = d.id_card ".
+                "LEFT JOIN elders as e on p.id_card = e.id_card ".
+                "LEFT JOIN patient as pt on p.id_card = pt.id_card ".
+                "LEFT JOIN province as pv on p.Pid = pv.Pid ".
+                "LEFT JOIN district as dt on p.Did = dt.Did ".
+                "LEFT JOIN subdistrict as sdt on p.STDid = sdt.SDTid ".
+            "WHERE p.id_card = $pID";
         try {
             $db = new db();
             $db = $db->connect();
@@ -163,8 +176,7 @@ $app->group('/person', function() {
         $db = $db->connect();
         $isBegin = $db->beginTransaction();
 
-        $new_id_card = $args['id_card'];
-        $old_id_card = $req->getParam('old_id_card');
+        $id_card = $args['id_card'];
         $person_titlename = $req->getParam('person_titlename');
         $person_firstname = $req->getParam('person_firstname');
         $person_lastname = $req->getParam('person_lastname');
@@ -188,7 +200,7 @@ $app->group('/person', function() {
 
         $sql = "UPDATE person
             SET
-                id_card = '$new_id_card',
+                id_card = '$id_card',
                 person_titlename = '$person_titlename',
                 person_firstname='$person_firstname',
                 person_lastname='$person_lastname',
@@ -207,50 +219,24 @@ $app->group('/person', function() {
                 person_lat=$person_lat,
                 person_lng=$person_lng,
                 user_id=$user_id
-            WHERE id_card = '$old_id_card'";
+            WHERE id_card = '$id_card'";
         try {
             $db->exec($sql);
+            $db->exec("DELETE FROM patient WHERE id_card LIKE '$id_card'");
+            $db->exec("DELETE FROM disability WHERE id_card LIKE '$id_card'");
+            $db->exec("DELETE FROM elders WHERE id_card LIKE '$id_card'");
+
             for ($i=0; $i < count($person_type); $i++) {
-                $pt = $person_type[$i];
-                if (!in_array($pt, $old_person_type)) {
-                    $table = '';
-                    switch ($pt) {
-                        case 1:
-                            $table = 'patient';
-                            break;
-                        case 2:
-                            $table = 'disability';
-                            break;
-                        case 3:
-                            $table = 'elders';
-                            break;
-                        default:
-                            break;
-                    }
-                    $db->exec("INSERT INTO $table (id_card, user_id) VALUES ('$id_card', $user_id)");
+                $ele = $person_type[$i];
+                if ($ele == 1) {
+                    $db->exec("INSERT INTO patient (id_card, user_id) VALUES ('$id_card', $user_id)");
+                } elseif ($ele == 2) {
+                    $db->exec("INSERT INTO disability (id_card, user_id) VALUES ('$id_card', $user_id)");
+                } else {
+                    $db->exec("INSERT INTO elders (id_card, user_id) VALUES ('$id_card', $user_id)");
                 }
             }
 
-            for ($i=0; $i < count($old_person_type); $i++) { 
-                $opt = $old_person_type[$i];
-                if (!in_array($opt, $person_type)) {
-                    $table = '';
-                    switch ($pt) {
-                        case 1:
-                            $table = 'patient';
-                            break;
-                        case 2:
-                            $table = 'disability';
-                            break;
-                        case 3:
-                            $table = 'elders';
-                            break;
-                        default:
-                            break;
-                    }
-                    $db->exec("DELETE FROM $table WHERE id_card LIKE '$id_card'");
-                }
-            }
             $db->commit();
             header('Content-type: application/json');
             return $res->withJSON(array('success' => true), 200, JSON_UNESCAPED_UNICODE);
