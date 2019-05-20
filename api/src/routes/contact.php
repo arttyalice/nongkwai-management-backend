@@ -125,7 +125,7 @@ $app->group('/contact', function() {
         VALUES
         (
             '$contact_titlename', '$contact_firstname', '$contact_lastname',
-            '$contact_addNum', $contact_addMoo, '$contact_addSoi', $contact_addRoad,
+            '$contact_addNum', $contact_addMoo, '$contact_addSoi', '$contact_addRoad',
             '$contact_addVillage', $SDTid, $Did, $Pid,
             '$contact_phone', '$contact_relation', $patient_id
         )";
@@ -136,7 +136,7 @@ $app->group('/contact', function() {
             return $res->withJSON(array('success' => true), 200, JSON_UNESCAPED_UNICODE);
         } catch(PDOException $err) {
             $db->rollBack();
-            return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);
+            return $res->withJSON(array('success' => false, 'description' => $err->getMessage(), "sql" => $sql), 500, JSON_UNESCAPED_UNICODE);
         }
     });
     $this->get('/delete/{contact_id}', function(Request $req, Response $res, $args) {
