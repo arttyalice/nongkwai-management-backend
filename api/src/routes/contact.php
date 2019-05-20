@@ -40,6 +40,19 @@ $app->group('/contact', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
+    $this->get('/get/length', function(Request $req, Response $res, $args) {
+        try {
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query("SELECT COUNT(contact_id) as length FROM contact");
+            $length = $stm->fetch(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($length, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
     $this->get('/get/one/{ctID}', function(Request $req, Response $res, $args) {
         try {
             $ctID = $args['ctID'];

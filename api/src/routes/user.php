@@ -37,6 +37,19 @@ $app->group('/user', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
+    $this->get('/get/length', function(Request $req, Response $res, $args) {
+        try {
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query("SELECT COUNT(user_id) as length FROM user");
+            $length = $stm->fetch(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($length, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
     $this->get('/get/one/{uID}', function(Request $req, Response $res, $args) {
         $uID = $args['uID'];
         $sql = "SELECT * FROM user WHERE user_id = $uID LIMIT 1";

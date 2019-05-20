@@ -73,7 +73,7 @@ $app->group('/person', function() {
                 "LEFT JOIN province as pv on p.Pid = pv.Pid ".
                 "LEFT JOIN district as dt on p.Did = dt.Did ".
                 "LEFT JOIN subdistrict as sdt on p.STDid = sdt.SDTid ".
-            "WHERE p.id_card = $pID";
+            "WHERE p.id_card = '$pID'";
         try {
             $db = new db();
             $db = $db->connect();
@@ -98,6 +98,19 @@ $app->group('/person', function() {
             
             header('Content-type: application/json');
             return $res->withJSON($user, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
+    $this->get('/get/length', function(Request $req, Response $res, $args) {
+        try {
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query("SELECT COUNT(id_card) as length FROM person");
+            $length = $stm->fetch(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($length, 200, JSON_UNESCAPED_UNICODE);
         } catch(PDOException $err) {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }

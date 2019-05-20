@@ -42,6 +42,19 @@ $app->group('/disabled', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
+    $this->get('/get/length', function(Request $req, Response $res, $args) {
+        try {
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query("SELECT COUNT(disability_id) as length FROM disability");
+            $length = $stm->fetch(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($length, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
     $this->get('/get/one/{pID}', function(Request $req, Response $res, $args) {
         $pID = $args['pID'];
         $sql = "SELECT

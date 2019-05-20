@@ -44,6 +44,19 @@ $app->group('/visiting', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
+    $this->get('/get/length', function(Request $req, Response $res, $args) {
+        try {
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query("SELECT COUNT(user_id) as length FROM visiting");
+            $length = $stm->fetch(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($length, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
     $this->get('/get/visiting/all/{id_card}', function(Request $req, Response $res, $args) {
         try {
             $id_card = $args["id_card"];
@@ -51,9 +64,10 @@ $app->group('/visiting', function() {
                         adl.toilet + adl.mobility + adl.dressing +
                         adl.stairs + adl.bathing + adl.bowels +
                         adl.bladder) as adl_summary, v.visiting_date,
-                        v.visiting_detail
+                        v.visiting_detail, u.fistname as staff_fname, u.lastname as staff_lname
                     FROM visiting_adl as adl
                         LEFT JOIN visiting as v on v.visiting_id = adl.visiting_id
+                        LEFT JOIN user as u on v.user_id = u.user_id
                     WHERE v.id_card = '$id_card'";
 
             $db = new db();
