@@ -220,7 +220,7 @@ $app->group('/aid', function() {
                 patient_expensesSum='$patient_expensesSum',
                 patient_expensesDetail='$patient_expensesDetail',
                 getmoney_id='$getmoney_id',
-                user_id='$user_id'
+                user_id=$user_id
             WHERE id_card = $id_card";
         try {
             $db->exec($sql);
