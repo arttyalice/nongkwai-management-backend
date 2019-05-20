@@ -77,27 +77,38 @@ $app->group('/treatment', function() {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
     });
-    $this->get('/get/one/{pID}', function(Request $req, Response $res, $args) {
-        $pID = $args['pID'];
+    $this->get('/get/one/{tmID}', function(Request $req, Response $res, $args) {
+        $tmID = $args['tmID'];
         $sql = "SELECT ".
-            "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, p.person_birthday, p.person_phone, p.person_lat, p.person_lng, d.disability_id, e.elders_id, pt.patient_id ".
-            "FROM person as p ".
-            "LEFT JOIN disability as d on p.id_card = d.id_card ".
-            "LEFT JOIN elders as e on p.id_card = e.id_card ".
-            "LEFT JOIN patient as pt on p.id_card = pt.id_card ".
-            "WHERE p.id_card = $pID LIMIT 1";
+                "t.*, p.id_card, ".
+                "p.person_titlename, p.person_firstname, p.person_lastname, ".
+                "p.person_phone, d.disability_id, e.elders_id, pt.patient_id ".
+            "FROM treatment as t ".
+                "LEFT JOIN person as p on t.id_card = p.id_card ".
+                "LEFT JOIN disability as d on p.id_card = d.id_card ".
+                "LEFT JOIN elders as e on p.id_card = e.id_card ".
+                "LEFT JOIN patient as pt on p.id_card = pt.id_card ".
+            "WHERE t.treatment_id = $tmID LIMIT 1";
+        $fileQuery = "SELECT *
+                    FROM treatment_file
+                    WHERE treatment_id = $tmID";
         try {
             $db = new db();
             $db = $db->connect();
             $stm = $db->query($sql);
-            $user = $stm->fetch(PDO::FETCH_ASSOC);
+            $treatment = $stm->fetch(PDO::FETCH_ASSOC);
 
-            if (!$user) {
-                return $res->withJSON(array('success' => false, 'description' => "person not found"), 400, JSON_UNESCAPED_UNICODE);
+            if (!$treatment) {
+                return $res->withJSON(array('success' => false, 'description' => "treatment not found"), 400, JSON_UNESCAPED_UNICODE);
             }
+
+            $stm = $db->query($fileQuery);
+            $files = $stm->fetchAll(PDO::FETCH_ASSOC);
+
+            $data = array("treatment" => $treatment, "files" => $files);
             
             header('Content-type: application/json');
-            return $res->withJSON($user, 200, JSON_UNESCAPED_UNICODE);
+            return $res->withJSON($data, 200, JSON_UNESCAPED_UNICODE);
         } catch(PDOException $err) {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }
@@ -176,6 +187,58 @@ $app->group('/treatment', function() {
             $db->commit();
             header('Content-type: application/json');
             return $res->withJSON(array('success' => true), 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            $db->rollBack();
+            return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);
+        }
+    });
+    $this->post('/update/{tmID}', function(Request $req, Response $res, $args) {
+        $directory = $this->get('upload_directory');
+        $upload_url = $this->get('upload_url');
+        $db = new db();
+        $db = $db->connect();
+        $isBegin = $db->beginTransaction();
+        $tmID = $args["tmID"];
+
+        $user_id = $req->getParam("user_id");
+        $id_card = $req->getParam("id_card");
+        $treatment_detail = $req->getParam("treatment_detail");
+        $disease = $req->getParam("disease");
+        $hospital = $req->getParam("hospital");
+        $height = $req->getParam("height");
+        $weigth = $req->getParam("weigth");
+        $SBP = $req->getParam("SBP");
+        $DBP = $req->getParam("DBP");
+        $isNew = $req->getParam("isNewFile");
+        $files = $req->getUploadedFiles();
+
+        $sql = "UPDATE treatment
+                SET
+                    treatment_detail='$treatment_detail',
+                    id_card='$id_card',
+                    user_id=$user_id,
+                    disease='$disease',
+                    hospital='$hospital',
+                    height=$height,
+                    weigth=$weigth,
+                    SBP=$SBP,
+                    DBP=$DBP
+                WHERE treatment_id = $tmID";
+        try {
+            $db->exec($sql);
+
+            if ($isNew == "true") {
+                $db->exec("DELETE FROM treatment_file WHERE treatment_id = $tmID");
+
+                foreach ($files['newFile'] as $ele) {
+                    $filename = moveUploadedFile($directory.'/treatment/'.$tmID, $ele);
+                    $url = $upload_url.'treatment/'.$tmID.'/'.$filename;
+                    $db->exec("INSERT INTO treatment_file(file_name, file_path, treatment_id) VALUES ('$filename', '$url', $tmID)");
+                }
+            }
+            $db->commit();
+            header('Content-type: application/json');
+            return $res->withJSON(array('success' => true, '$sql' => $sql), 200, JSON_UNESCAPED_UNICODE);
         } catch(PDOException $err) {
             $db->rollBack();
             return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);

@@ -14,10 +14,13 @@ $app->group('/visiting', function() {
             }
 
             $sql = "SELECT ".
-            "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, p.person_birthday, p.person_phone, p.person_lat, p.person_lng, d.disability_id, e.elders_id, pt.patient_id ".
+            "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname,
+            p.person_birthday, p.person_phone, p.person_lat, p.person_lng,
+            d.disability_id, e.elders_id, pt.patient_id, u.fistname as staff_fname, u.lastname as staff_lname ".
             "FROM person as p ".
             "LEFT JOIN disability as d on p.id_card = d.id_card ".
             "LEFT JOIN elders as e on p.id_card = e.id_card ".
+            "LEFT JOIN user as u on p.user_id = u.user_id ".
             "LEFT JOIN patient as pt on p.id_card = pt.id_card ";
             
             if (!empty($search)) {

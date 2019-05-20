@@ -213,7 +213,7 @@ $app->group('/aid', function() {
             $db->exec($sql);
             $db->commit();
             header('Content-type: application/json');
-            return $res->withJSON(array('success' => true), 200, JSON_UNESCAPED_UNICODE);
+            return $res->withJSON(array('success' => true, 'query' => $sql), 200, JSON_UNESCAPED_UNICODE);
         } catch(PDOException $err) {
             $db->rollBack();
             return $res->withJSON(array('success' => false, 'description' => $err->getMessage()), 500, JSON_UNESCAPED_UNICODE);

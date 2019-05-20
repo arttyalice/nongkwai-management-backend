@@ -32,7 +32,7 @@ $app->group('/allowance', function() {
                 "person_phone LIKE '%$search%' OR ".
                 "person_birthday LIKE '%$search%' ";
             }
-            $sql .= "ORDER BY id_card desc ".
+            $sql .= "ORDER BY al.allowance_id desc ".
             "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();
@@ -70,6 +70,26 @@ $app->group('/allowance', function() {
             
             header('Content-type: application/json');
             return $res->withJSON($user, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
+    $this->get('/get/person/{id_card}', function(Request $req, Response $res, $args) {
+        try {
+            $id_card = $args["id_card"];
+
+            $sql = "SELECT al.* ".
+            "FROM allowance as al ".
+            "WHERE al.id_card = $id_card ".
+            "ORDER BY al.allowance_id desc ";
+
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query($sql);
+            $users = $stm->fetchAll(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($users, 200, JSON_UNESCAPED_UNICODE);
         } catch(PDOException $err) {
             echo '{"error" : {"text": '.$err->getMessage().'}}';
         }

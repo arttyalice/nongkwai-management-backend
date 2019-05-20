@@ -60,16 +60,16 @@ $app->group('/contact', function() {
     $this->get('/get/patient/{patient_id}', function(Request $req, Response $res, $args) {
         $patient_id = $args['patient_id'];
         $sql = "SELECT
-                    contact_id, contact_titlename, contact_firstname, contact_lastname,
-                    contact_addNum, contact_addMoo, contact_addSoi, contact_addRoad,
-                    contact_addVillage, c.SDTid, c.Did, c.Pid,
+                    c.contact_id, c.contact_titlename, c.contact_firstname, c.contact_lastname,
+                    c.contact_addNum, c.contact_addMoo, c.contact_addSoi, c.contact_addRoad,
+                    c.contact_addVillage, c.SDTid, c.Did, c.Pid,
                     pv.Pname_th, dt.Dname_th, sdt.SDTname_th, sdt.SDTzipcode,
-                    contact_phone, contact_relation, patient_id
+                    c.contact_phone, c.contact_relation, c.patient_id
                 FROM contact as c
                     LEFT JOIN province as pv on c.Pid = pv.Pid
                     LEFT JOIN district as dt on c.Did = dt.Did
                     LEFT JOIN subdistrict as sdt on c.SDTid = sdt.SDTid
-                WHERE patient_id = $patient_id";
+                WHERE c.patient_id = $patient_id";
         try {
             $db = new db();
             $db = $db->connect();

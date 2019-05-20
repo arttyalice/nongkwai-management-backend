@@ -44,9 +44,13 @@ $app->group('/person', function() {
     $this->get('/get/list', function(Request $req, Response $res) {
         try {
             $sql = "SELECT ".
-            "id_card, CONCAT(person_titlename, ' ',person_firstname, ' ', person_lastname) as name ".
-            "FROM person ";
-            $sql .= "ORDER BY id_card desc ";
+            "p.id_card, CONCAT(person_titlename, ' ',person_firstname, ' ', person_lastname) as name, ".
+            "d.disability_id, e.elders_id, pt.patient_id ".
+            "FROM person as p ".
+            "LEFT JOIN disability as d on p.id_card = d.id_card ".
+            "LEFT JOIN elders as e on p.id_card = e.id_card ".
+            "LEFT JOIN patient as pt on p.id_card = pt.id_card ";
+            $sql .= "ORDER BY p.id_card desc ";
             $db = new db();
             $db = $db->connect();
             $stm = $db->query($sql);
@@ -222,20 +226,20 @@ $app->group('/person', function() {
             WHERE id_card = '$id_card'";
         try {
             $db->exec($sql);
-            $db->exec("DELETE FROM patient WHERE id_card LIKE '$id_card'");
-            $db->exec("DELETE FROM disability WHERE id_card LIKE '$id_card'");
-            $db->exec("DELETE FROM elders WHERE id_card LIKE '$id_card'");
+            // $db->exec("DELETE FROM patient WHERE id_card LIKE '$id_card'");
+            // $db->exec("DELETE FROM disability WHERE id_card LIKE '$id_card'");
+            // $db->exec("DELETE FROM elders WHERE id_card LIKE '$id_card'");
 
-            for ($i=0; $i < count($person_type); $i++) {
-                $ele = $person_type[$i];
-                if ($ele == 1) {
-                    $db->exec("INSERT INTO patient (id_card, user_id) VALUES ('$id_card', $user_id)");
-                } elseif ($ele == 2) {
-                    $db->exec("INSERT INTO disability (id_card, user_id) VALUES ('$id_card', $user_id)");
-                } else {
-                    $db->exec("INSERT INTO elders (id_card, user_id) VALUES ('$id_card', $user_id)");
-                }
-            }
+            // for ($i=0; $i < count($person_type); $i++) {
+            //     $ele = $person_type[$i];
+            //     if ($ele == 1) {
+            //         $db->exec("INSERT INTO patient (id_card, user_id) VALUES ('$id_card', $user_id)");
+            //     } elseif ($ele == 2) {
+            //         $db->exec("INSERT INTO disability (id_card, user_id) VALUES ('$id_card', $user_id)");
+            //     } else {
+            //         $db->exec("INSERT INTO elders (id_card, user_id) VALUES ('$id_card', $user_id)");
+            //     }
+            // }
 
             $db->commit();
             header('Content-type: application/json');
