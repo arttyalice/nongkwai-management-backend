@@ -176,7 +176,15 @@ $app->group('/person', function() {
     });
     $this->get('/delete/{pID}', function(Request $req, Response $res, $args) {
         $pID = $args['pID'];
-        $sql = "DELETE FROM person WHERE id_card = $pID";
+        $sql = array(
+            "DELETE FROM person WHERE id_card = $pID",
+            "DELETE FROM allowance WHERE id_card = $pID",
+            "DELETE FROM disability WHERE id_card = $pID",
+            "DELETE FROM elders WHERE id_card = $pID",
+            "DELETE FROM patient WHERE id_card = $pID",
+            "DELETE FROM treatment WHERE id_card = $pID",
+            "DELETE FROM visiting WHERE id_card = $pID"
+        );
         try {
             $db = new db();
             $db = $db->connect();

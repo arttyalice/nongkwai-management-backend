@@ -16,7 +16,7 @@ $app->group('/allowance', function() {
             $sql = "SELECT ".
             "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, ".
             "p.person_birthday, p.person_phone, p.person_lat, p.person_lng, d.disability_id, ".
-            "e.elders_id, pt.patient_id, al.allowance_year, al.allowance_type, al.allowance_money, ".
+            "e.elders_id, pt.patient_id, al.allowance_date, al.allowance_type, al.allowance_money, ".
             "al.allowance_id ".
             "FROM person as p ".
             "LEFT JOIN disability as d on p.id_card = d.id_card ".
@@ -34,6 +34,36 @@ $app->group('/allowance', function() {
             }
             $sql .= "ORDER BY al.allowance_id desc ".
             "LIMIT $offset, $size";
+            $db = new db();
+            $db = $db->connect();
+            $stm = $db->query($sql);
+            $users = $stm->fetchAll(PDO::FETCH_ASSOC);
+            
+            header('Content-type: application/json;');
+            return $res->withJSON($users, 200, JSON_UNESCAPED_UNICODE);
+        } catch(PDOException $err) {
+            echo '{"error" : {"text": '.$err->getMessage().'}}';
+        }
+    });
+    $this->get('/get/report', function(Request $req, Response $res) {
+        try {
+            $from = $req->getQueryParam('from');
+            $to = $req->getQueryParam('to');
+            $sql = "SELECT ".
+            "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, ".
+            "p.person_birthday, p.person_phone, p.person_lat, p.person_lng, d.disability_id, ".
+            "e.elders_id, pt.patient_id, al.allowance_date, al.allowance_type, al.allowance_money, ".
+            "al.allowance_id ".
+            "FROM person as p ".
+            "LEFT JOIN disability as d on p.id_card = d.id_card ".
+            "LEFT JOIN elders as e on p.id_card = e.id_card ".
+            "LEFT JOIN patient as pt on p.id_card = pt.id_card ".
+            "RIGHT JOIN allowance as al on p.id_card = al.id_card ";
+            
+            if ($from != null && $to != null) {
+                $sql .= "WHERE al.allowance_date BETWEEN '$from' AND '$to' ";
+            }
+            $sql .= "ORDER BY al.allowance_id desc ";
             $db = new db();
             $db = $db->connect();
             $stm = $db->query($sql);
@@ -63,7 +93,7 @@ $app->group('/allowance', function() {
         $sql = "SELECT ".
         "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, ".
         "p.person_birthday, p.person_phone, p.person_lat, p.person_lng, d.disability_id, ".
-        "e.elders_id, pt.patient_id, al.allowance_year, al.allowance_type, al.allowance_money, ".
+        "e.elders_id, pt.patient_id, al.allowance_date, al.allowance_type, al.allowance_money, ".
         "al.allowance_id ".
         "FROM person as p ".
         "LEFT JOIN disability as d on p.id_card = d.id_card ".
@@ -119,11 +149,11 @@ $app->group('/allowance', function() {
 
         $sql = "INSERT INTO allowance
         (
-            id_card, allowance_year, allowance_type, allowance_money
+            id_card, allowance_type, allowance_money
         )
         VALUES
         (
-            '$id_card', $year, $type, $amount
+            '$id_card', $type, $amount
         )";
         try {
             $db->exec($sql);
@@ -149,7 +179,6 @@ $app->group('/allowance', function() {
         $sql = "UPDATE allowance
             SET 
                 id_card='$id_card',
-                allowance_year=$year,
                 allowance_type=$type,
                 allowance_money=$amount
             WHERE allowance_id = $alID
