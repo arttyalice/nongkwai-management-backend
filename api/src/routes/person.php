@@ -188,7 +188,9 @@ $app->group('/person', function() {
         try {
             $db = new db();
             $db = $db->connect();
-            $stm = $db->query($sql);
+            foreach ($sql as $key => $value) {
+                $db->exec($value);
+            }
             
             header('Content-type: application/json');
             return $res->withJSON(array('success' => true), 200, JSON_UNESCAPED_UNICODE);
