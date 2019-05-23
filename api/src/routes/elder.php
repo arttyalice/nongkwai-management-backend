@@ -17,7 +17,7 @@ $app->group('/elder', function() {
                 e.getmoney_id, p.person_titlename, p.person_firstname, 
                 p.person_lastname, p.person_phone, p.person_birthday
             FROM elders AS e
-                LEFT JOIN person as p on e.id_card = p.id_card
+                INNER JOIN person as p on e.id_card = p.id_card
             ";
             if ($search != null) {
                 $sql .= "WHERE e.elders_info LIKE '%$search%' OR ".
@@ -60,7 +60,7 @@ $app->group('/elder', function() {
             e.getmoney_id, gm.getmoney_name, p.person_titlename, p.person_firstname, 
             p.person_lastname, p.person_phone, p.person_birthday
         FROM elders AS e
-            LEFT JOIN person as p on e.id_card = p.id_card
+            INNER JOIN person as p on e.id_card = p.id_card
             LEFT JOIN get_money as gm on e.getmoney_id = gm.getmoney_id
         WHERE e.id_card = $id_card LIMIT 1";
         try {
