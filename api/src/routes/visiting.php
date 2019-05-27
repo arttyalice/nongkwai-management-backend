@@ -31,7 +31,7 @@ $app->group('/visiting', function() {
                 "person_phone LIKE '%$search%' OR ".
                 "person_birthday LIKE '%$search%' ";
             }
-            $sql .= "ORDER BY p.id_card desc ".
+            $sql .= "ORDER BY p.created_date desc ".
             "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();
@@ -68,7 +68,8 @@ $app->group('/visiting', function() {
                     FROM visiting_adl as adl
                         LEFT JOIN visiting as v on v.visiting_id = adl.visiting_id
                         LEFT JOIN user as u on v.user_id = u.user_id
-                    WHERE v.id_card = '$id_card'";
+                    WHERE v.id_card = '$id_card'
+                    ORDER BY v.visiting_date";
 
             $db = new db();
             $db = $db->connect();

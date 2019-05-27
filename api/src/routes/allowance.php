@@ -49,6 +49,7 @@ $app->group('/allowance', function() {
         try {
             $from = $req->getQueryParam('from');
             $to = $req->getQueryParam('to');
+            $type = json_decode($req->getQueryParam('type'), true);
             $sql = "SELECT ".
             "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, ".
             "p.person_birthday, p.person_phone, p.person_lat, p.person_lng, d.disability_id, ".
@@ -62,7 +63,48 @@ $app->group('/allowance', function() {
             
             if ($from != null && $to != null) {
                 $sql .= "WHERE al.allowance_date BETWEEN '$from' AND '$to' ";
+                if (count($type) > 0) {
+                    foreach ($type as $key => $value) {
+                        if ($value == 1) {
+                            $sql .= "AND pt.patient_id IS NOT NULL ";
+                        } elseif ($value == 2) {
+                            $sql .= "AND d.disability_id IS NOT NULL ";
+                        } elseif ($value == 3) {
+                            $sql .= "AND e.elders_id IS NOT NULL ";
+                        }
+                    }
+                }
+            } else {
+                if (count($type) > 0) {
+                    $ifF = true;
+                    foreach ($type as $key => $value) {
+                        if ($value == 1) {
+                            if ($ifF == true) {
+                                $sql .= "WHERE pt.patient_id IS NOT NULL ";
+                                $ifF = false;
+                            } else {
+                                $sql .= "AND pt.patient_id IS NOT NULL ";
+                            }
+                        } elseif ($value == 2) {
+                            if ($ifF == true) {
+                                $sql .= "WHERE d.disability_id IS NOT NULL ";
+                                $ifF = false;
+                            } else {
+                                $sql .= "AND d.disability_id IS NOT NULL ";
+                            }
+                        } elseif ($value == 3) {
+                            if ($ifF == true) {
+                                $sql .= "WHERE e.elders_id IS NOT NULL ";
+                                $ifF = false;
+                            } else {
+                                $sql .= "AND e.elders_id IS NOT NULL ";
+                            }
+                            
+                        }
+                    }
+                }
             }
+
             $sql .= "ORDER BY al.allowance_id desc ";
             $db = new db();
             $db = $db->connect();

@@ -28,7 +28,7 @@ $app->group('/person', function() {
                 "p.person_phone LIKE '%$search%' OR ".
                 "p.person_birthday LIKE '%$search%' ";
             }
-            $sql .= "ORDER BY p.id_card desc ".
+            $sql .= "ORDER BY p.created_date desc ".
             "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();
