@@ -5,31 +5,44 @@ use \Psr\Http\Message\ResponseInterface as Response;
 $app->group('/person', function() {
     $this->get('/get/all', function(Request $req, Response $res) {
         try {
+            $sql = "";
             $page = $req->getQueryParam('page');
             $size = $req->getQueryParam('size');
             $search = $req->getQueryParam('search');
-            $offset = (int)$page * (int)$size;
-            if ($page == null || $size == null) {
-                return $res->withJSON(array('status' => $size), 400);
+            $offset = 0;
+            if ($size == 'all') {
+                $sql = "SELECT ".
+                    "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, p.person_birthday, p.person_phone, ".
+                    "d.disability_id, e.elders_id, pt.patient_id ".
+                    "FROM person as p ".
+                    "LEFT JOIN disability as d on p.id_card = d.id_card ".
+                    "LEFT JOIN elders as e on p.id_card = e.id_card ".
+                    "LEFT JOIN patient as pt on p.id_card = pt.id_card ".
+                    "ORDER BY p.created_date desc ";
+            } else {
+                $offset = (int)$page * (int)$size;
+                if ($page == null || $size == null) {
+                    return $res->withJSON(array('status' => $size), 400);
+                }
+                $sql = "SELECT ".
+                "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, p.person_birthday, p.person_phone, ".
+                "d.disability_id, e.elders_id, pt.patient_id ".
+                "FROM person as p ".
+                "LEFT JOIN disability as d on p.id_card = d.id_card ".
+                "LEFT JOIN elders as e on p.id_card = e.id_card ".
+                "LEFT JOIN patient as pt on p.id_card = pt.id_card ";
+                
+                if ($search != null) {
+                    $sql .= "WHERE p.id_card LIKE '%$search%' OR ".
+                    "p.person_titlename LIKE '%$search%' OR ".
+                    "p.person_firstname LIKE '%$search%' OR ".
+                    "p.person_lastname LIKE '%$search%' OR ".
+                    "p.person_phone LIKE '%$search%' OR ".
+                    "p.person_birthday LIKE '%$search%' ";
+                }
+                $sql .= "ORDER BY p.created_date desc ".
+                "LIMIT $offset, $size";
             }
-            $sql = "SELECT ".
-            "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, p.person_birthday, p.person_phone, ".
-            "d.disability_id, e.elders_id, pt.patient_id ".
-            "FROM person as p ".
-            "LEFT JOIN disability as d on p.id_card = d.id_card ".
-            "LEFT JOIN elders as e on p.id_card = e.id_card ".
-            "LEFT JOIN patient as pt on p.id_card = pt.id_card ";
-            
-            if ($search != null) {
-                $sql .= "WHERE p.id_card LIKE '%$search%' OR ".
-                "p.person_titlename LIKE '%$search%' OR ".
-                "p.person_firstname LIKE '%$search%' OR ".
-                "p.person_lastname LIKE '%$search%' OR ".
-                "p.person_phone LIKE '%$search%' OR ".
-                "p.person_birthday LIKE '%$search%' ";
-            }
-            $sql .= "ORDER BY p.created_date desc ".
-            "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();
             $stm = $db->query($sql);

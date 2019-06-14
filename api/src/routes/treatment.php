@@ -228,7 +228,7 @@ $app->group('/treatment', function() {
             $db->exec($sql);
 
             if ($isNew == "true") {
-                $db->exec("DELETE FROM treatment_file WHERE treatment_id = $tmID");
+                // $db->exec("DELETE FROM treatment_file WHERE treatment_id = $tmID");
 
                 foreach ($files['newFile'] as $ele) {
                     $filename = moveUploadedFile($directory.'/treatment/'.$tmID, $ele);

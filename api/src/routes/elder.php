@@ -8,10 +8,6 @@ $app->group('/elder', function() {
             $page = $req->getQueryParam('page');
             $size = $req->getQueryParam('size');
             $search = $req->getQueryParam('search');
-            $offset = (int)$page * (int)$size;
-            if ($page == null || $size == null) {
-                return $res->withJSON(array('status' => $size), 400);
-            }
             $sql = "SELECT
                 e.elders_id, e.elders_info, e.elders_detail, e.id_card, 
                 e.getmoney_id, p.person_titlename, p.person_firstname, 
@@ -19,16 +15,24 @@ $app->group('/elder', function() {
             FROM elders AS e
                 INNER JOIN person as p on e.id_card = p.id_card
             ";
-            if ($search != null) {
-                $sql .= "WHERE e.elders_info LIKE '%$search%' OR ".
-                "e.elders_detail LIKE '%$search%' OR ".
-                "e.id_card LIKE '%$search%' OR ".
-                "p.person_titlename LIKE '%$search%' OR ".
-                "p.person_firstname LIKE '%$search%' OR ".
-                "p.person_lastname LIKE '%$search%' ";
+            if ($size != 'all') {
+                $offset = (int)$page * (int)$size;
+                if ($page == null || $size == null) {
+                    return $res->withJSON(array('status' => $size), 400);
+                }
+                if ($search != null) {
+                    $sql .= "WHERE e.elders_info LIKE '%$search%' OR ".
+                    "e.elders_detail LIKE '%$search%' OR ".
+                    "e.id_card LIKE '%$search%' OR ".
+                    "p.person_titlename LIKE '%$search%' OR ".
+                    "p.person_firstname LIKE '%$search%' OR ".
+                    "p.person_lastname LIKE '%$search%' ";
+                }
+                $sql .= "ORDER BY e.elders_id desc ".
+                "LIMIT $offset, $size";
+            } else {
+                $sql .= "ORDER BY e.elders_id desc ";
             }
-            $sql .= "ORDER BY e.elders_id desc ".
-            "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();
             $stm = $db->query($sql);

@@ -50,6 +50,8 @@ $app->group('/allowance', function() {
             $from = $req->getQueryParam('from');
             $to = $req->getQueryParam('to');
             $type = json_decode($req->getQueryParam('type'), true);
+            $allowance = json_decode($req->getQueryParam('allowance'), true);
+            
             $sql = "SELECT ".
             "p.id_card, p.person_titlename, p.person_firstname, p.person_lastname, ".
             "p.person_birthday, p.person_phone, p.person_lat, p.person_lng, d.disability_id, ".
@@ -73,9 +75,19 @@ $app->group('/allowance', function() {
                             $sql .= "AND e.elders_id IS NOT NULL ";
                         }
                     }
+
+                    foreach ($allowance as $key => $value) {
+                        if ($value == 1) {
+                            $sql .= "AND al.allowance_type = 3 ";
+                        } elseif ($value == 2) {
+                            $sql .= "AND al.allowance_type = 2 ";
+                        } elseif ($value == 3) {
+                            $sql .= "AND al.allowance_type = 1 ";
+                        }
+                    }
                 }
             } else {
-                if (count($type) > 0) {
+                if (count($type) > 0 || count($allowance) > 0) {
                     $ifF = true;
                     foreach ($type as $key => $value) {
                         if ($value == 1) {
@@ -99,7 +111,31 @@ $app->group('/allowance', function() {
                             } else {
                                 $sql .= "AND e.elders_id IS NOT NULL ";
                             }
-                            
+                        }
+                    }
+
+                    foreach ($allowance as $key => $value) {
+                        if ($value == 1) {
+                            if ($ifF == true) {
+                                $sql .= "WHERE al.allowance_type = 3 ";
+                                $ifF = false;
+                            } else {
+                                $sql .= "AND al.allowance_type = 3 ";
+                            }
+                        } elseif ($value == 2) {
+                            if ($ifF == true) {
+                                $sql .= "WHERE al.allowance_type = 2 ";
+                                $ifF = false;
+                            } else {
+                                $sql .= "AND al.allowance_type = 2 ";
+                            }
+                        } elseif ($value == 3) {
+                            if ($ifF == true) {
+                                $sql .= "WHERE al.allowance_type = 1 ";
+                                $ifF = false;
+                            } else {
+                                $sql .= "AND al.allowance_type = 1 ";
+                            }
                         }
                     }
                 }

@@ -8,10 +8,6 @@ $app->group('/aid', function() {
             $page = $req->getQueryParam('page');
             $size = $req->getQueryParam('size');
             $search = $req->getQueryParam('search');
-            $offset = (int)$page * (int)$size;
-            if ($page == null || $size == null) {
-                return $res->withJSON(array('status' => $size), 400);
-            }
             $sql = "SELECT 
                 pa.patient_id,
                 pa.patient_habitatchoice,
@@ -39,18 +35,25 @@ $app->group('/aid', function() {
             FROM patient AS pa
                 LEFT JOIN person as pe on pa.id_card = pe.id_card
             ";
-            
-            if ($search != null) {
-                $sql .= "WHERE pa.patient_habitatchoice LIKE '%$search%' OR ".
-                "pa.patient_habitatdetail LIKE '%$search%' OR ".
-                "pa.patient_distance LIKE '%$search%' OR ".
-                "pa.id_card LIKE '%$search%' OR ".
-                "pe.person_titlename LIKE '%$search%' OR ".
-                "pe.person_firstname LIKE '%$search%' OR ".
-                "pe.person_lastname LIKE '%$search%' ";
+            if ($page != 'all') {
+                $offset = (int)$page * (int)$size;
+                if ($page == null || $size == null) {
+                    return $res->withJSON(array('status' => $size), 400);
+                }
+                if ($search != null) {
+                    $sql .= "WHERE pa.patient_habitatchoice LIKE '%$search%' OR ".
+                    "pa.patient_habitatdetail LIKE '%$search%' OR ".
+                    "pa.patient_distance LIKE '%$search%' OR ".
+                    "pa.id_card LIKE '%$search%' OR ".
+                    "pe.person_titlename LIKE '%$search%' OR ".
+                    "pe.person_firstname LIKE '%$search%' OR ".
+                    "pe.person_lastname LIKE '%$search%' ";
+                }
+                $sql .= "ORDER BY pa.patient_id desc ".
+                "LIMIT $offset, $size";
+            } else {
+                $sql .= "ORDER BY pa.patient_id desc ";
             }
-            $sql .= "ORDER BY pa.patient_id desc ".
-            "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();
             $stm = $db->query($sql);

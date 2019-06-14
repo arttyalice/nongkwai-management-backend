@@ -8,10 +8,6 @@ $app->group('/disabled', function() {
             $page = $req->getQueryParam('page');
             $size = $req->getQueryParam('size');
             $search = $req->getQueryParam('search');
-            $offset = (int)$page * (int)$size;
-            if ($page == null || $size == null) {
-                return $res->withJSON(array('status' => $size), 400);
-            }
             $sql = "SELECT
                 d.disability_id, d.disability_info, d.disability_detail, d.disability_type,
                 d.id_card, d.getmoney_id, p.person_titlename, p.person_firstname, 
@@ -20,17 +16,25 @@ $app->group('/disabled', function() {
                 LEFT JOIN person as p on d.id_card = p.id_card
             ";
             
-            if ($search != null) {
-                $sql .= "WHERE d.disability_info LIKE '$search' OR ".
-                "d.disability_detail LIKE '$search' OR ".
-                "d.disability_type LIKE '$search' OR ".
-                "d.id_card LIKE '$search' OR ".
-                "p.person_titlename LIKE '$search' OR ".
-                "p.person_firstname LIKE '$search' OR ".
-                "p.person_lastname LIKE '$search' ";
+            if ($size != 'all') {
+                $offset = (int)$page * (int)$size;
+                if ($page == null || $size == null) {
+                    return $res->withJSON(array('status' => $size), 400);
+                }
+                if ($search != null) {
+                    $sql .= "WHERE d.disability_info LIKE '$search' OR ".
+                    "d.disability_detail LIKE '$search' OR ".
+                    "d.disability_type LIKE '$search' OR ".
+                    "d.id_card LIKE '$search' OR ".
+                    "p.person_titlename LIKE '$search' OR ".
+                    "p.person_firstname LIKE '$search' OR ".
+                    "p.person_lastname LIKE '$search' ";
+                }
+                $sql .= "ORDER BY d.disability_id desc ".
+                "LIMIT $offset, $size";
+            } else {
+                $sql .= "ORDER BY d.disability_id desc ";
             }
-            $sql .= "ORDER BY d.disability_id desc ".
-            "LIMIT $offset, $size";
             $db = new db();
             $db = $db->connect();
             $stm = $db->query($sql);
