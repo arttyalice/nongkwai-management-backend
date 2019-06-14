@@ -69,7 +69,7 @@ $app->group('/visiting', function() {
                         LEFT JOIN visiting as v on v.visiting_id = adl.visiting_id
                         LEFT JOIN user as u on v.user_id = u.user_id
                     WHERE v.id_card = '$id_card'
-                    ORDER BY v.visiting_date";
+                    ORDER BY v.visiting_date desc";
 
             $db = new db();
             $db = $db->connect();
